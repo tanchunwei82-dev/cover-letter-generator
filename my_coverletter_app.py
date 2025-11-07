@@ -13,7 +13,8 @@ openai_api_key = st.sidebar.text_input(
     help="You can find your API key at https://platform.openai.com/account/api-keys"
 )
 
-def classify_sentiment_openai(job_description_text,cv_text, sample_coverletter):
+
+def coverletter_generator_openai(job_description_text,cv_text, sample_coverletter):
     """
     Classify the sentiment of a customer review using OpenAI's GPT-4o model.
     Parameters:
@@ -23,10 +24,11 @@ def classify_sentiment_openai(job_description_text,cv_text, sample_coverletter):
     """
     client = OpenAI(api_key=openai_api_key)
     prompt = f'''
-        Create a coverletter for the candidate, based on the job description:{job_description_text} and the candidate's resume:{cv_text}.
+        Act like an experienced hiring manager, based on the job description below, help me pick 20 key words and skills that a candidate should include in his resume to pass the ATS (ranking the most important key words/skills starting from top). resume. Also generate 3 main problems the hiring manager is looking to solve. Job desciption:{job_description_text}.
+        
+        Create a coverletter for the candidate, based on the job description:{job_description_text} and the candidate's resume:{cv_text}, to address to the hiring manager's problems. Please use the format of the sample coverletter:{sample_coverletter}. The coverletter should fit concisely into one A4 size page.
 
-        Please use the format of the sample coverletter:{sample_coverletter}.
-        The coverletter should fit concisely into one A4 size page.
+        Also, act like a professional career coach, advise how the CV could be improved. Generate an improved CV.
         '''
     # prompt = f'''
         
@@ -99,7 +101,7 @@ if uploaded_job_file is not None  and uploaded_cv_file is not None:
     # Make the strings in the sentiment column titled
     # reviews_df["sentiment"] = reviews_df["sentiment"].str.title()
     # sentiment_counts = reviews_df["sentiment"].value_counts()
-    cover_letter = classify_sentiment_openai(job_text,cv_text,sample_text)
+    cover_letter = coverletter_generator_openai(job_text,cv_text,sample_text)
     st.write(cover_letter)
     # st.write(sentiment_counts)
 
@@ -134,3 +136,4 @@ if uploaded_job_file is not None  and uploaded_cv_file is not None:
     #     title='Sentiment Distribution'
     # )
     # st.plotly_chart(fig)
+
