@@ -90,6 +90,12 @@ uploaded_job_file = st.file_uploader(
     "Upload a txt file for the job", 
     type=["txt"])
 
+# Example CV format
+with st.expander("📋 See example CV format"):
+    st.markdown("Your CV should be a plain `.txt` file. Here's a simple example:")
+    st.code('TAN CHUN WEI\nPhone: +65 9123 4567 | Email: chunwei@email.com | LinkedIn: linkedin.com/in/chunwei\n\nPROFESSIONAL SUMMARY\nData Analyst with 3+ years of experience in healthcare analytics, dashboard development,\nand stakeholder reporting. Skilled in translating complex data into actionable insights.\n\nKEY SKILLS\n- Data Analysis: SQL, Python, Excel\n- Visualisation: Tableau, Power BI\n- Reporting & Dashboards: automated reporting pipelines\n- Stakeholder Engagement: cross-functional collaboration\n- Healthcare domain knowledge\n\nPROFESSIONAL EXPERIENCE\nABC Healthcare Group | Data Analyst | Jan 2022 - Present\n- Built dashboards tracking KPIs across 5 clinical departments\n- Automated monthly reporting, reducing manual effort by 60%\n- Collaborated with ops and finance teams to support data-driven decisions\n\nXYZ Analytics Pte Ltd | Junior Analyst | Jun 2020 - Dec 2021\n- Conducted data cleaning and analysis for retail and healthcare clients\n- Produced weekly performance reports for senior stakeholders\n\nEDUCATION\nBSc Business Analytics | National University of Singapore | 2020\n\nCERTIFICATIONS\n- Google Data Analytics Certificate\n- Tableau Desktop Specialist\n', language="text")
+    st.caption("Copy this format into a .txt file and upload it below.")
+
 # PDF file uploader
 uploaded_cv_file = st.file_uploader(
     "Upload a txt file for your CV", 
@@ -132,6 +138,11 @@ if uploaded_job_file is not None  and uploaded_cv_file is not None:
     # Make the strings in the sentiment column titled
     # reviews_df["sentiment"] = reviews_df["sentiment"].str.title()
     # sentiment_counts = reviews_df["sentiment"].value_counts()
+    # Check if OpenAI API key is provided before calling the API
+    if not openai_api_key:
+        st.warning("⚠️ Please enter your OpenAI API key in the sidebar before generating.", icon="🔑")
+        st.stop()
+
     full_response = coverletter_generator_openai(job_text, cv_text, sample_text)
 
     # Parse sections using markers
