@@ -107,9 +107,38 @@ uploaded_cv_file = st.file_uploader(
 #     type=["csv"])
 
 
-# Generate button
+# Initialise session state
+if "ats_section" not in st.session_state:
+    st.session_state.ats_section = None
+if "cover_letter_section" not in st.session_state:
+    st.session_state.cover_letter_section = None
+if "revised_cv_section" not in st.session_state:
+    st.session_state.revised_cv_section = None
+
+# Parse sections using markers
+def extract_section(text, start_marker, end_marker=None):
+    start = text.find(start_marker)
+    if start == -1:
+        return ""
+    start += len(start_marker)
+    if end_marker:
+        end = text.find(end_marker, start)
+        return text[start:end].strip() if end != -1 else text[start:].strip()
+    return text[start:].strip()
+
+# Generate and Reset buttons side by side
 st.markdown("---")
-generate_clicked = st.button("🚀 Generate Cover Letter & Revised CV", use_container_width=True)
+col_gen, col_reset = st.columns([3, 1])
+with col_gen:
+    generate_clicked = st.button("🚀 Generate Cover Letter & Revised CV", use_container_width=True)
+with col_reset:
+    reset_clicked = st.button("🔄 Reset", use_container_width=True)
+
+if reset_clicked:
+    st.session_state.ats_section = None
+    st.session_state.cover_letter_section = None
+    st.session_state.revised_cv_section = None
+    st.rerun()
 
 if generate_clicked:
     # Validate all inputs and show errors
@@ -134,47 +163,37 @@ if generate_clicked:
         with st.spinner("Generating your cover letter and revised CV..."):
             full_response = coverletter_generator_openai(job_text, cv_text, sample_text)
 
-        # Parse sections using markers
-        def extract_section(text, start_marker, end_marker=None):
-            start = text.find(start_marker)
-            if start == -1:
-                return ""
-            start += len(start_marker)
-            if end_marker:
-                end = text.find(end_marker, start)
-                return text[start:end].strip() if end != -1 else text[start:].strip()
-            return text[start:].strip()
+        st.session_state.ats_section = extract_section(full_response, "---ATS KEYWORDS---", "---COVER LETTER---")
+        st.session_state.cover_letter_section = extract_section(full_response, "---COVER LETTER---", "---REVISED CV---")
+        st.session_state.revised_cv_section = extract_section(full_response, "---REVISED CV---")
 
-        ats_section = extract_section(full_response, "---ATS KEYWORDS---", "---COVER LETTER---")
-        cover_letter_section = extract_section(full_response, "---COVER LETTER---", "---REVISED CV---")
-        revised_cv_section = extract_section(full_response, "---REVISED CV---")
+# Display results if they exist in session state
+if st.session_state.ats_section:
+    st.subheader("🔑 ATS Keywords & Hiring Manager Problems")
+    st.write(st.session_state.ats_section)
 
-        # Display all sections
-        st.subheader("🔑 ATS Keywords & Hiring Manager Problems")
-        st.write(ats_section)
+    st.subheader("✉️ Cover Letter")
+    st.write(st.session_state.cover_letter_section)
 
-        st.subheader("✉️ Cover Letter")
-        st.write(cover_letter_section)
+    st.subheader("📄 Revised CV")
+    st.write(st.session_state.revised_cv_section)
 
-        st.subheader("📄 Revised CV")
-        st.write(revised_cv_section)
-
-        # Download buttons side by side
-        col1, col2 = st.columns(2)
-        with col1:
-            st.download_button(
-                label="⬇️ Download Cover Letter",
-                data=cover_letter_section.encode("utf-8"),
-                file_name="cover_letter.txt",
-                mime="text/plain"
-            )
-        with col2:
-            st.download_button(
-                label="⬇️ Download Revised CV",
-                data=revised_cv_section.encode("utf-8"),
-                file_name="revised_cv.txt",
-                mime="text/plain"
-            )
+    # Download buttons side by side
+    col1, col2 = st.columns(2)
+    with col1:
+        st.download_button(
+            label="⬇️ Download Cover Letter",
+            data=st.session_state.cover_letter_section.encode("utf-8"),
+            file_name="cover_letter.txt",
+            mime="text/plain"
+        )
+    with col2:
+        st.download_button(
+            label="⬇️ Download Revised CV",
+            data=st.session_state.revised_cv_section.encode("utf-8"),
+            file_name="revised_cv.txt",
+            mime="text/plain"
+        )
 
     # # Create 3 columns to display the 3 metrics
     # col1, col2, col3 = st.columns(3)
