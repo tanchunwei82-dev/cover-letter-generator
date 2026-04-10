@@ -24,11 +24,19 @@ def coverletter_generator_openai(job_description_text,cv_text, sample_coverlette
     """
     client = OpenAI(api_key=openai_api_key)
     prompt = f'''
-        Act like an experienced hiring manager, based on the job description below, help me pick 20 key words and skills that a candidate should include in his resume to pass the ATS (ranking the most important key words/skills starting from top). resume. Also generate 3 main problems the hiring manager is looking to solve. Job desciption:{job_description_text}.
+        Act like an experienced hiring manager, based on the job description below, help me pick 20 key words and skills that a candidate should include in his resume to pass the ATS (ranking the most important key words/skills starting from top). Also generate 3 main problems the hiring manager is looking to solve. Job description:{job_description_text}.
         
-        Create a coverletter for the candidate, based on the job description:{job_description_text} and the candidate's resume:{cv_text}, to address to the hiring manager's problems. Please use the format of the sample coverletter:{sample_coverletter}. The coverletter should fit concisely into one A4 size page.
+        Create a cover letter for the candidate, based on the job description:{job_description_text} and the candidate's resume:{cv_text}, to address the hiring manager's problems. Please use the format of the sample cover letter:{sample_coverletter}. The cover letter should fit concisely into one A4 size page.
 
         Also, act like a professional career coach, advise how the CV could be improved. Generate an improved CV.
+
+        Structure your response using these exact markers:
+        ---ATS KEYWORDS---
+        (keywords and hiring manager problems here)
+        ---COVER LETTER---
+        (cover letter here)
+        ---REVISED CV---
+        (revised CV here)
         '''
     # prompt = f'''
         
@@ -124,17 +132,49 @@ if uploaded_job_file is not None  and uploaded_cv_file is not None:
     # Make the strings in the sentiment column titled
     # reviews_df["sentiment"] = reviews_df["sentiment"].str.title()
     # sentiment_counts = reviews_df["sentiment"].value_counts()
-    cover_letter = coverletter_generator_openai(job_text,cv_text,sample_text)
-    st.write(cover_letter)
+    full_response = coverletter_generator_openai(job_text, cv_text, sample_text)
 
-    # Download button for the generated cover letter
-    st.download_button(
-        label="⬇️ Download Cover Letter as TXT",
-        data=cover_letter.encode("utf-8"),
-        file_name="cover_letter.txt",
-        mime="text/plain"
-    )
-    # st.write(sentiment_counts)
+    # Parse sections using markers
+    def extract_section(text, start_marker, end_marker=None):
+        start = text.find(start_marker)
+        if start == -1:
+            return ""
+        start += len(start_marker)
+        if end_marker:
+            end = text.find(end_marker, start)
+            return text[start:end].strip() if end != -1 else text[start:].strip()
+        return text[start:].strip()
+
+    ats_section = extract_section(full_response, "---ATS KEYWORDS---", "---COVER LETTER---")
+    cover_letter_section = extract_section(full_response, "---COVER LETTER---", "---REVISED CV---")
+    revised_cv_section = extract_section(full_response, "---REVISED CV---")
+
+    # Display all sections
+    st.subheader("🔑 ATS Keywords & Hiring Manager Problems")
+    st.write(ats_section)
+
+    st.subheader("✉️ Cover Letter")
+    st.write(cover_letter_section)
+
+    st.subheader("📄 Revised CV")
+    st.write(revised_cv_section)
+
+    # Download buttons side by side
+    col1, col2 = st.columns(2)
+    with col1:
+        st.download_button(
+            label="⬇️ Download Cover Letter",
+            data=cover_letter_section.encode("utf-8"),
+            file_name="cover_letter.txt",
+            mime="text/plain"
+        )
+    with col2:
+        st.download_button(
+            label="⬇️ Download Revised CV",
+            data=revised_cv_section.encode("utf-8"),
+            file_name="revised_cv.txt",
+            mime="text/plain"
+        )
 
     # # Create 3 columns to display the 3 metrics
     # col1, col2, col3 = st.columns(3)
