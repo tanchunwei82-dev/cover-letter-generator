@@ -54,6 +54,29 @@ def coverletter_generator_openai(job_description_text,cv_text, sample_coverlette
     return completion.choices[0].message.content
 
 
+# Example TXT format
+with st.expander("📋 See example job description format"):
+    st.markdown("Your job description should be a plain `.txt` file. Here's a simple example:")
+    st.code("""Job Title: Data Analyst
+Company: St. Luke's Hospital
+
+About the Role:
+We are looking for a detail-oriented Data Analyst to join our analytics team.
+The candidate will support data-driven decision making across clinical operations.
+
+Responsibilities:
+- Analyse large datasets to identify trends and insights
+- Build and maintain dashboards and reports
+- Collaborate with stakeholders to understand data needs
+
+Requirements:
+- Proficiency in SQL, Python, or R
+- Experience with data visualisation tools (e.g. Tableau, Power BI)
+- Strong communication skills
+- Healthcare experience is a plus
+""", language="text")
+    st.caption("Copy this format into a .txt file and upload it below.")
+
 # PDF file uploader (job description)
 uploaded_job_file = st.file_uploader(
     "Upload a txt file for the job", 
@@ -103,6 +126,14 @@ if uploaded_job_file is not None  and uploaded_cv_file is not None:
     # sentiment_counts = reviews_df["sentiment"].value_counts()
     cover_letter = coverletter_generator_openai(job_text,cv_text,sample_text)
     st.write(cover_letter)
+
+    # Download button for the generated cover letter
+    st.download_button(
+        label="⬇️ Download Cover Letter as TXT",
+        data=cover_letter.encode("utf-8"),
+        file_name="cover_letter.txt",
+        mime="text/plain"
+    )
     # st.write(sentiment_counts)
 
     # # Create 3 columns to display the 3 metrics
@@ -136,4 +167,3 @@ if uploaded_job_file is not None  and uploaded_cv_file is not None:
     #     title='Sentiment Distribution'
     # )
     # st.plotly_chart(fig)
-
