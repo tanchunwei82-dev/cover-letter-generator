@@ -107,85 +107,74 @@ uploaded_cv_file = st.file_uploader(
 #     type=["csv"])
 
 
-# Once the user uploads a csv file:
-if uploaded_job_file is not None  and uploaded_cv_file is not None: 
-    # Read the file
-    # reviews_df = pd.read_csv(uploaded_file)
+# Generate button
+st.markdown("---")
+generate_clicked = st.button("🚀 Generate Cover Letter & Revised CV", use_container_width=True)
 
-    cv_text = uploaded_cv_file.read().decode("utf-8", errors="replace")
-    job_text = uploaded_job_file.read().decode("utf-8", errors="replace")
-
-
-    with open('sample_coverletter.txt') as f:
-        sample_text = f.read()
-
-    # # Check if the data has a text column
-    # text_columns = reviews_df.select_dtypes(include="object").columns
-
-    # if len(text_columns) == 0:
-    #     st.error("No text columns found in the uploaded file.")
-
-    # Show a dropdown menu to select the review column
-    # review_column = st.selectbox(
-    #     "Select the column with the customer reviews",
-    #     text_columns
-    # )
-
-    # # Analyze the sentiment of the selected column
-    # reviews_df["sentiment"] = reviews_df[review_column].apply(classify_sentiment_openai)
-    
-    # Display the sentiment distribution in metrics in 3 columns: Positive, Negative, Neutral
-    # Make the strings in the sentiment column titled
-    # reviews_df["sentiment"] = reviews_df["sentiment"].str.title()
-    # sentiment_counts = reviews_df["sentiment"].value_counts()
-    # Check if OpenAI API key is provided before calling the API
+if generate_clicked:
+    # Validate all inputs and show errors
+    errors = []
     if not openai_api_key:
-        st.warning("⚠️ Please enter your OpenAI API key in the sidebar before generating.", icon="🔑")
-        st.stop()
+        errors.append("🔑 OpenAI API key is missing. Please enter it in the sidebar.")
+    if uploaded_job_file is None:
+        errors.append("📄 Job description file is missing. Please upload a TXT file.")
+    if uploaded_cv_file is None:
+        errors.append("📋 CV file is missing. Please upload a TXT file.")
 
-    full_response = coverletter_generator_openai(job_text, cv_text, sample_text)
+    if errors:
+        for error in errors:
+            st.error(error)
+    else:
+        cv_text = uploaded_cv_file.read().decode("utf-8", errors="replace")
+        job_text = uploaded_job_file.read().decode("utf-8", errors="replace")
 
-    # Parse sections using markers
-    def extract_section(text, start_marker, end_marker=None):
-        start = text.find(start_marker)
-        if start == -1:
-            return ""
-        start += len(start_marker)
-        if end_marker:
-            end = text.find(end_marker, start)
-            return text[start:end].strip() if end != -1 else text[start:].strip()
-        return text[start:].strip()
+        with open('sample_coverletter.txt') as f:
+            sample_text = f.read()
 
-    ats_section = extract_section(full_response, "---ATS KEYWORDS---", "---COVER LETTER---")
-    cover_letter_section = extract_section(full_response, "---COVER LETTER---", "---REVISED CV---")
-    revised_cv_section = extract_section(full_response, "---REVISED CV---")
+        with st.spinner("Generating your cover letter and revised CV..."):
+            full_response = coverletter_generator_openai(job_text, cv_text, sample_text)
 
-    # Display all sections
-    st.subheader("🔑 ATS Keywords & Hiring Manager Problems")
-    st.write(ats_section)
+        # Parse sections using markers
+        def extract_section(text, start_marker, end_marker=None):
+            start = text.find(start_marker)
+            if start == -1:
+                return ""
+            start += len(start_marker)
+            if end_marker:
+                end = text.find(end_marker, start)
+                return text[start:end].strip() if end != -1 else text[start:].strip()
+            return text[start:].strip()
 
-    st.subheader("✉️ Cover Letter")
-    st.write(cover_letter_section)
+        ats_section = extract_section(full_response, "---ATS KEYWORDS---", "---COVER LETTER---")
+        cover_letter_section = extract_section(full_response, "---COVER LETTER---", "---REVISED CV---")
+        revised_cv_section = extract_section(full_response, "---REVISED CV---")
 
-    st.subheader("📄 Revised CV")
-    st.write(revised_cv_section)
+        # Display all sections
+        st.subheader("🔑 ATS Keywords & Hiring Manager Problems")
+        st.write(ats_section)
 
-    # Download buttons side by side
-    col1, col2 = st.columns(2)
-    with col1:
-        st.download_button(
-            label="⬇️ Download Cover Letter",
-            data=cover_letter_section.encode("utf-8"),
-            file_name="cover_letter.txt",
-            mime="text/plain"
-        )
-    with col2:
-        st.download_button(
-            label="⬇️ Download Revised CV",
-            data=revised_cv_section.encode("utf-8"),
-            file_name="revised_cv.txt",
-            mime="text/plain"
-        )
+        st.subheader("✉️ Cover Letter")
+        st.write(cover_letter_section)
+
+        st.subheader("📄 Revised CV")
+        st.write(revised_cv_section)
+
+        # Download buttons side by side
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button(
+                label="⬇️ Download Cover Letter",
+                data=cover_letter_section.encode("utf-8"),
+                file_name="cover_letter.txt",
+                mime="text/plain"
+            )
+        with col2:
+            st.download_button(
+                label="⬇️ Download Revised CV",
+                data=revised_cv_section.encode("utf-8"),
+                file_name="revised_cv.txt",
+                mime="text/plain"
+            )
 
     # # Create 3 columns to display the 3 metrics
     # col1, col2, col3 = st.columns(3)
